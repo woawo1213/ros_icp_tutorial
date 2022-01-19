@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>pcl_cpp_tutorial</name>
+  <name>ros_icp_tutorial</name>
   <version>0.0.0</version>
-  <description>The pcl_cpp_tutorial package</description>
+  <description>The ros_icp_tutorial package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->

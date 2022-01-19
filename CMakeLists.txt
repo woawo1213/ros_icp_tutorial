@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(pcl_cpp_tutorial)
+project(ros_icp_tutorial)
 
 find_package(catkin REQUIRED COMPONENTS
   pcl_conversions
