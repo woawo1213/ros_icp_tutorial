@@ -14,13 +14,6 @@
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
 
-//input terminal
-#include <string>    
-#include <vector>
-
-#include <tf/transform_datatypes.h>
-#include <tf/transform_listener.h>
-
 class ICPTester
 {
     ros::Publisher src_pub_; // source
@@ -33,24 +26,23 @@ class ICPTester
     pcl::PointCloud<pcl::PointXYZ> *acc_pc = new pcl::PointCloud<pcl::PointXYZ>; // accumulate point cloud 
     pcl::PointCloud<pcl::PointXYZ> *save_pc = new pcl::PointCloud<pcl::PointXYZ>; // save previous point cloud
     
-    Eigen::Matrix4f tf_sum;// 초기 depth frame tf 넣어줘야하나?
+    Eigen::Matrix4f tf_sum;// 초기 depth frame tf or identity 넣어줘야하나?
     int count=0;
-
-    tf::TransformListener tf_;
 
 public:
     ICPTester()
     {
         //depth optical frame tf
-        tf_sum<< 0, 0, 1, 0,
-                -1, 0, 0, 0,
-                 0,-1, 0, 0,
-                 0, 0, 0, 1;
-
-        // tf_sum<< 1, 0, 0, 0,
-        //          0, 1, 0, 0,
-        //          0, 0, 1, 0,
+        // tf_sum<< 0, 0, 1, 0,
+        //         -1, 0, 0, 0,
+        //          0,-1, 0, 0,
         //          0, 0, 0, 1;
+
+        // identity
+        tf_sum<< 1, 0, 0, 0,
+                 0, 1, 0, 0,
+                 0, 0, 1, 0,
+                 0, 0, 0, 1;
 
         ali_pub_ = nh_.advertise<sensor_msgs::PointCloud2> ("align_output", 1000);
         src_pub_ = nh_.advertise<sensor_msgs::PointCloud2> ("source_output", 1000);
@@ -88,7 +80,7 @@ public:
         // Perform the actual filtering
         pcl::VoxelGrid<pcl::PCLPointCloud2> sor;
         sor.setInputCloud (cloudPtr);
-        sor.setLeafSize (0.1f, 0.1f, 0.1f);
+        sor.setLeafSize (0.15f, 0.15f, 0.15f);
         sor.filter (cloud_filtered);
 
         //convert pcl::PCLPointCloud2 -> pcl::PointCloud<pcl::PointXYZ>
@@ -112,7 +104,7 @@ public:
             // icp.setMaxCorrespondenceDistance(5);
             // Set the transformation epsilon (criterion 2)
             icp.setTransformationEpsilon(1e-8);
-            // Set the maximum number of iterations (criterion 1)
+            // Set the maximum number of iterations (criterion 1) registration 될때까지 반복횟수
             icp.setMaximumIterations(50);
             // Perform the alignment
             icp.align(*align);
@@ -120,7 +112,6 @@ public:
             // Eigen::Isometry3f::
             // Obtain the transformation that aligned src_pc to align
             Eigen::Matrix4f src2dst = icp.getFinalTransformation();
-            
 
             double score = icp.getFitnessScore();
             bool is_converged = icp.hasConverged();
@@ -178,7 +169,7 @@ int main (int argc, char** argv)
     ros::init (argc, argv, "test_icp");
 
     ICPTester it;
-    ros::Rate r(1);
+    ros::Rate r(5);
 
     while (ros::ok())
     {
