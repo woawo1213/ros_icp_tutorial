@@ -53,14 +53,11 @@ target_link_libraries(ransac ${catkin_LIBRARIES})
 add_executable(kdtree src/kdtree.cpp)
 target_link_libraries(kdtree ${catkin_LIBRARIES})
 
-add_executable(icp src/icp.cpp)
-target_link_libraries(icp ${catkin_LIBRARIES})
-
 add_executable(test_icp src/test_icp.cpp)
 target_link_libraries(test_icp ${catkin_LIBRARIES})
 
-add_executable(test_b src/test_b.cpp)
-target_link_libraries(test_b ${catkin_LIBRARIES})
+add_executable(test_gicp src/test_gicp.cpp)
+target_link_libraries(test_gicp ${catkin_LIBRARIES})
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
