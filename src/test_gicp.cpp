@@ -14,6 +14,7 @@
 #include <pcl/registration/gicp.h>
 // PCL specific includes
 #include <ros/ros.h>
+#include <tf/transform_broadcaster.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <Eigen/Geometry>
 #include <string>
@@ -85,6 +86,8 @@ public:
         sensor_msgs::PointCloud2 output4;
         sensor_msgs::PointCloud2 output5;
 
+        static tf::TransformBroadcaster br;
+
         // std::string write_file_name = "desk.pcd";
         // std::string counting = std::to_string(count);
         // write_file_name="0"+counting+"_"+write_file_name;
@@ -94,7 +97,7 @@ public:
         // Perform the actual filtering
         pcl::VoxelGrid<pcl::PCLPointCloud2> sor;
         sor.setInputCloud (cloudPtr);
-        sor.setLeafSize (0.1f, 0.1f, 0.1f);
+        sor.setLeafSize (0.2f, 0.2f, 0.2f);
         sor.filter (cloud_filtered);
 
         // //convert pcl::PCLPointCloud2 -> pcl::PointCloud<pcl::PointXYZ>
