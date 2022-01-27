@@ -12,11 +12,13 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pcl/registration/gicp.h>
+
 // PCL specific includes
 #include <ros/ros.h>
 #include <tf/transform_broadcaster.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <Eigen/Geometry>
+#include <tf_conversions/tf_eigen.h>
 #include <string>
 
 class ICPTester
@@ -25,7 +27,6 @@ class ICPTester
     ros::Publisher dst_pub_; // destination
     ros::Publisher ali_pub_; // align
     ros::Publisher acc_pub_; // accumulate
-    ros::Publisher tgt_pub_;
     ros::NodeHandle nh_;
     ros::Subscriber sub_;
 
@@ -33,19 +34,14 @@ class ICPTester
     pcl::PointCloud<pcl::PointXYZ> *save_pc = new pcl::PointCloud<pcl::PointXYZ>; // save previous point cloud
     
     Eigen::Matrix4f tf_mul;// 초기 depth frame tf or identity 넣어줘야하나?
-    std::string file_path="/home/jm/workspace/icp_ws/src/icp_tutorial/pcd/desk/";
+    // std::string file_path="/home/jm/workspace/icp_ws/src/icp_tutorial/pcd/desk/";
+    
     
     int count=0;
 
 public:
     ICPTester()
     {
-        //depth optical frame tf
-        // tf_mul<< 0, 0, 1, 0,
-        //         -1, 0, 0, 0,
-        //          0,-1, 0, 0,
-        //          0, 0, 0, 1;
-
         // identity
         tf_mul<< 1, 0, 0, 0,
                  0, 1, 0, 0,
@@ -56,7 +52,6 @@ public:
         src_pub_ = nh_.advertise<sensor_msgs::PointCloud2> ("source_output", 1000);
         dst_pub_ = nh_.advertise<sensor_msgs::PointCloud2> ("destination_output", 1000);
         acc_pub_ = nh_.advertise<sensor_msgs::PointCloud2> ("accumulate_output", 1000);
-        tgt_pub_ = nh_.advertise<sensor_msgs::PointCloud2> ("tgt_output", 1000);
         sub_ = nh_.subscribe<sensor_msgs::PointCloud2> ("/astra/depth/points", 1, &ICPTester::cloud_cb, this);
     };
 
@@ -87,7 +82,7 @@ public:
         sensor_msgs::PointCloud2 output5;
 
         static tf::TransformBroadcaster br;
-
+        tf::Transform transform;
         // std::string write_file_name = "desk.pcd";
         // std::string counting = std::to_string(count);
         // write_file_name="0"+counting+"_"+write_file_name;
@@ -97,7 +92,7 @@ public:
         // Perform the actual filtering
         pcl::VoxelGrid<pcl::PCLPointCloud2> sor;
         sor.setInputCloud (cloudPtr);
-        sor.setLeafSize (0.2f, 0.2f, 0.2f);
+        sor.setLeafSize (0.1f, 0.1f, 0.1f);
         sor.filter (cloud_filtered);
 
         // //convert pcl::PCLPointCloud2 -> pcl::PointCloud<pcl::PointXYZ>
@@ -119,11 +114,12 @@ public:
             gicp.setInputSource(src_pc);
             gicp.setInputTarget(dst_pc);
             // Set the max correspondence distance, src dst 사이의 최대거리 설정, 결과에 영향을 많이줌
-            gicp.setMaxCorrespondenceDistance(10);
+            gicp.setMaxCorrespondenceDistance(0.05);
             // Set the transformation epsilon ,
             gicp.setTransformationEpsilon(1e-10);
             // Set the maximum number of iterations,  registration 될때까지 반복횟수
             gicp.setMaximumIterations(1000);
+            gicp.setRANSACIterations(1000);
             // Perform the alignment
             gicp.align(*align);
 
@@ -135,34 +131,28 @@ public:
             double score = gicp.getFitnessScore();
             bool is_converged = gicp.hasConverged();
 
+            ROS_INFO("score: %lf",score);//src dst 거리의 평균, 작을수록 icp good
             ROS_INFO("icp matrix");
             std::cout<<src2dst<<std::endl;
 
-            ROS_INFO("score: %lf",score);//src dst 거리의 평균, 작을수록 icp good
-            // ROS_INFO("converged: ",is_converged);
-            std::cout<<"###############################################"<<std::endl;
-
             //multiple tf
-            // src2dst=src2dst.reverse();
             tf_mul = tf_mul * src2dst;
-            ROS_INFO("tf matrix");
-            std::cout<< tf_mul <<std::endl;
-
-            //print camera pose
-            std::cout<<"###############################################"<<std::endl;
-            ROS_INFO("camera pose t x:%f y:%f z:%f", tf_mul(0,3), tf_mul(1,3), tf_mul(2,3));
-            // ROS_INFO("camera pose t: ");
-            // std::cout<<"w: "<<tf_mul.<<std::endl;
-
-            Eigen::Isometry3f i3f;
-            std::cout<<"transpose"<<std::endl;
-            std::cout<<tf_mul.transpose()<<std::endl;
-
-            std::cout<<"###############################################"<<std::endl;
 
             //tranform init source cloud
-            // tf_mul=tf_mul.reverse();
             pcl::transformPointCloud(*align, *tf_tgt, tf_mul);
+            
+            //getcamera pose
+            ROS_INFO("camera pose t x:%f y:%f z:%f", tf_mul(0,3), tf_mul(1,3), tf_mul(2,3));
+            Eigen::Matrix4f rev;
+            rev=tf_mul.inverse();
+            Eigen::Matrix3f rot;
+            rot=rev.block<3,3>(0,0);
+            Eigen::Quaternionf q(rot);
+
+            //send Transform
+            transform.setOrigin(tf::Vector3(rev(0,3), rev(1,3), rev(2,3)));
+            transform.setRotation(tf::Quaternion(q.x(),q.y(),q.z(),q.w()));
+            br.sendTransform(tf::StampedTransform(transform,ros::Time::now(),"astra_rgb_frame","astra_rgb_optical_frame"));// pframe/cframe
 
             //accumulate aling point cloud
             acc_pc->header.frame_id = src_pc->header.frame_id;
@@ -174,21 +164,18 @@ public:
         pcl::toPCLPointCloud2(*src_pc, cloud_filtered2);
         pcl::toPCLPointCloud2(*align, cloud_filtered3);
         pcl::toPCLPointCloud2(*acc_pc, cloud_filtered4);
-        pcl::toPCLPointCloud2(*tf_tgt, cloud_filtered5);
 
         //convert convert pcl::PCLPointCloud2 -> sensor_msgs::PointCloud2
         pcl_conversions::moveFromPCL(cloud_filtered, output);
         pcl_conversions::moveFromPCL(cloud_filtered2, output2);
         pcl_conversions::moveFromPCL(cloud_filtered3, output3);
         pcl_conversions::moveFromPCL(cloud_filtered4, output4);
-        pcl_conversions::moveFromPCL(cloud_filtered5, output5);
 
         //publish
         dst_pub_.publish(output);
         src_pub_.publish(output2);
         ali_pub_.publish(output3);
         acc_pub_.publish(output4); 
-        tgt_pub_.publish(output5);
 
         // pcl::io::savePCDFile<pcl::PointXYZ>(file_path+write_file_name,*dst_pc);
         // save src point cloud
