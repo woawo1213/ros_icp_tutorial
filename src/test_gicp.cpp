@@ -113,13 +113,16 @@ public:
             // Set the input source and target
             gicp.setInputSource(src_pc);
             gicp.setInputTarget(dst_pc);
+            // gicp.setRANSACIterations(1000);
             // Set the max correspondence distance, src dst 사이의 최대거리 설정, 결과에 영향을 많이줌
-            gicp.setMaxCorrespondenceDistance(0.05);
+            gicp.setMaxCorrespondenceDistance(1.0);
             // Set the transformation epsilon ,
             gicp.setTransformationEpsilon(1e-10);
             // Set the maximum number of iterations,  registration 될때까지 반복횟수
             gicp.setMaximumIterations(1000);
-            gicp.setRANSACIterations(1000);
+            gicp.setEuclideanFitnessEpsilon (1);
+            gicp.setRANSACOutlierRejectionThreshold (1.5);
+            
             // Perform the alignment
             gicp.align(*align);
 

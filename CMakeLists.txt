@@ -6,6 +6,8 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_ros
   roscpp
   sensor_msgs
+  tf 
+  tf2 geometry_msgs
 )
 catkin_package()
 add_executable(example src/example.cpp)
@@ -52,6 +54,9 @@ target_link_libraries(ransac ${catkin_LIBRARIES})
 
 add_executable(kdtree src/kdtree.cpp)
 target_link_libraries(kdtree ${catkin_LIBRARIES})
+
+add_executable(icp src/icp.cpp)
+target_link_libraries(icp ${catkin_LIBRARIES})
 
 add_executable(test_icp src/test_icp.cpp)
 target_link_libraries(test_icp ${catkin_LIBRARIES})
