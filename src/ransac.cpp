@@ -8,7 +8,6 @@
 #include <pcl/filters/extract_indices.h>
 
 //Plane model segmentation
-//http://pointclouds.org/documentation/tutorials/planar_segmentation.php#planar-segmentation
 
 int main (int argc, char** argv)
 {
@@ -18,7 +17,7 @@ int main (int argc, char** argv)
                                         inlierPoints (new pcl::PointCloud<pcl::PointXYZRGB>),
                                         inlierPoints_neg (new pcl::PointCloud<pcl::PointXYZRGB>);
 
-    // *.PCD 파일 읽기 (https://raw.githubusercontent.com/adioshun/gitBook_Tutorial_PCL/master/Beginner/sample/tabletop_passthrough.pcd)
+    // *.PCD 파일 읽기 
     pcl::io::loadPCDFile<pcl::PointXYZRGB> ("/home/jm/workspace/icp_ws/src/pcl_cpp_tutorial/pcd/table_top_passthrough.pcd", *cloud);
 
     // 포인트수 출력
