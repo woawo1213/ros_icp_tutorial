@@ -25,6 +25,7 @@
 #include <Eigen/Geometry>
 #include <tf_conversions/tf_eigen.h>
 #include <string>
+#include<vector>
 
 class ICPTester
 {
@@ -37,7 +38,8 @@ class ICPTester
 
     pcl::PointCloud<pcl::PointXYZ> *acc_pc = new pcl::PointCloud<pcl::PointXYZ>; // accumulate point cloud 
     pcl::PointCloud<pcl::PointXYZ> *save_pc = new pcl::PointCloud<pcl::PointXYZ>; // save previous point cloud
-    pcl::PointCloud<pcl::PointXYZ> *dst_pc =new pcl::PointCloud<pcl::PointXYZ>;
+    pcl::PointCloud<pcl::PointXYZ> *dst_pc = new pcl::PointCloud<pcl::PointXYZ>;
+    // pcl::PointCloud<pcl::PointXYZ> *final = new pcl::PointCloud<pcl::PointXYZ>;
 
     Eigen::Matrix4f tf_mul;// 초기 depth frame tf or identity 넣어줘야하나?
     // std::string file_path="/home/jm/workspace/icp_ws/src/icp_tutorial/pcd/desk/";
@@ -82,8 +84,9 @@ public:
         pcl::PointCloud<pcl::PointXYZ>::Ptr tf_tgt(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::PointCloud<pcl::PointXYZ>::Ptr assign_pc(new pcl::PointCloud<pcl::PointXYZ>);
         pcl::PointCloud<pcl::PointXYZ>::Ptr before_pc(new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PointCloud<pcl::PointXYZ>::Ptr final (new pcl::PointCloud<pcl::PointXYZ>);
 
-
+        std::vector<int> inliers;
 
         
         sensor_msgs::PointCloud2 output;
@@ -114,26 +117,36 @@ public:
             *dst_pc = *src_pc;
         }
         
+        pcl::SampleConsensusModelPlane<pcl::PointXYZ>::Ptr model_p (new pcl::SampleConsensusModelPlane<pcl::PointXYZ> (src_pc));
+        // pcl::SampleConsensusModelRegistration<pcl::PointXYZ>::Ptr model_r(new pcl::SampleConsensusModelRegistration<plc::PointXYZ>(src_pc));
+        pcl::RandomSampleConsensus<pcl::PointXYZ> ransac (model_p);
+        ransac.setDistanceThreshold (.01);
+        ransac.computeModel();
+        ransac.getInliers(inliers);
+        
 
-        pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients ());
-        pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
-        // Create the segmentation object
-        pcl::SACSegmentation<pcl::PointXYZ> seg;
-        // Optional
-        seg.setOptimizeCoefficients (true);
-        // Mandatory
-        seg.setInputCloud (src_pc);
-        seg.setModelType (pcl::SACMODEL_PLANE);
-        seg.setMethodType (pcl::SAC_RANSAC);
-        seg.setMaxIterations (1000);
-        seg.setDistanceThreshold (0.1);
-        seg.segment (*inliers, *coefficients);
+        pcl::copyPointCloud<pcl::PointXYZ>(*src_pc, inliers, *final);
 
-        pcl::ExtractIndices<pcl::PointXYZ> extract;
-        extract.setInputCloud (src_pc);
-        extract.setIndices (inliers);
-        extract.setNegative (true);//false
-        extract.filter (*fixed_pc);
+        // remove floor
+        // pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients ());
+        // pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
+        // // Create the segmentation object
+        // pcl::SACSegmentation<pcl::PointXYZ> seg;
+        // // Optional
+        // seg.setOptimizeCoefficients (true);
+        // // Mandatory
+        // seg.setInputCloud (src_pc);
+        // seg.setModelType (pcl::SACMODEL_PLANE);
+        // seg.setMethodType (pcl::SAC_RANSAC);
+        // seg.setMaxIterations (1000);
+        // seg.setDistanceThreshold (0.1);
+        // seg.segment (*inliers, *coefficients);
+
+        // pcl::ExtractIndices<pcl::PointXYZ> extract;
+        // extract.setInputCloud (src_pc);
+        // extract.setIndices (inliers);
+        // extract.setNegative (true);//false
+        // extract.filter (*fixed_pc);
 
         // icp
         // skip initial source point cloud input
@@ -142,14 +155,14 @@ public:
             ROS_INFO("count: %d",count);
             //allocate previous point cloud
             *before_pc = *save_pc;
-            *assign_pc=*dst_pc;
+            *assign_pc = *dst_pc;
 
             // icp
             // pcl::IterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icp;
             pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> gicp; //general icp
             // Registration 시행
             // Set the input source and target
-            gicp.setInputSource(fixed_pc);
+            gicp.setInputSource(src_pc);
             gicp.setInputTarget(assign_pc);
             // gicp.setRANSACIterations(1000);
             // Set the max correspondence distance, src dst 사이의 최대거리 설정, 결과에 영향을 많이줌
@@ -167,25 +180,15 @@ public:
             // Perform the alignment
             gicp.align(*align);
 
-            pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icpTransform; //general icp
-            // Registration 시행
-            // Set the input source and target
-            icpTransform.setInputSource(fixed_pc);
+            pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> icpTransform; 
+            icpTransform.setInputSource(src_pc);
             icpTransform.setInputTarget(before_pc);
-            // icpTransform.setRANSACIterations(1000);
-            // Set the max correspondence distance, src dst 사이의 최대거리 설정, 결과에 영향을 많이줌
             icpTransform.setMaxCorrespondenceDistance(1.0);
-            // Set the transformation epsilon ,
             icpTransform.setTransformationEpsilon(1e-10);
-            // Set the maximum number of iterations,  registration 될때까지 반복횟수
             icpTransform.setMaximumIterations(1000);
-            //알고리즘이 수렴된 것으로 간주되기 전에 ICP 루프의 연속된 두 단계 사이에 허용되는 최대 유클리드 오류를 설정합니다. 
-            //오차는 유클리드 의미에서 대응 간 차이의 합계를 대응 개수로 나눈 값으로 추정된다.
             icpTransform.setEuclideanFitnessEpsilon (1);
             icpTransform.setRANSACOutlierRejectionThreshold (1e-5);
-            //이 방법은 대상 데이터 인덱스와 변환된 소스 인덱스 사이의 거리가 주어진 내부 거리 임계값보다 작을 경우 점을 내부 값으로 간주합니다. 이 값은 기본적으로 0.05m로 설정됩니다.
             icpTransform.setRANSACIterations(10);
-            // Perform the alignment
             icpTransform.align(*align_t);
 
             
@@ -245,8 +248,14 @@ public:
 
         // pcl::io::savePCDFile<pcl::PointXYZ>(file_path+write_file_name,*dst_pc);
         // save src point cloud
-        *save_pc = *fixed_pc;
+        *save_pc = *src_pc;
         count++;
+
+        if(count==20)
+        {
+            pcl::io::savePCDFile<pcl::PointXYZ>("/home/jm/workspace/icp_ws/src/icp_tutorial/pcd/acc.pcd",*acc_pc);
+        }
+
         
     }
 
