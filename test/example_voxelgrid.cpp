@@ -12,7 +12,7 @@ ros::Publisher pub;
 void cloud_cb (const sensor_msgs::PointCloud2ConstPtr& cloud_msg) 
 {
     // Container for original & filtered data
-    // sensor_msgs::PointCloud2ConstPtr 는 택배상자
+    // sensor_msgs::PointCloud2ConstPtr는 택배상자
     // pcl::PCLPointCloud2 는 내용물
     pcl::PCLPointCloud2* cloud = new pcl::PCLPointCloud2; 
     pcl::PCLPointCloud2ConstPtr cloudPtr(cloud);

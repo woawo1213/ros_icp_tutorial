@@ -11,8 +11,6 @@ int main (int argc, char** argv)
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZ>);
 
-    
-    // *.PCD 파일 읽기 (https://raw.github.com/PointCloudLibrary/data/master/tutorials/table_scene_lms400.pcd)
     std::string read_file_name="table_scene_lms400.pcd";
     std::string write_file_name="table_scene_lms400_downsampled.pcd";
     std::string file_path="/home/jm/workspace/icp_ws/src/pcl_cpp_tutorial/pcd/";

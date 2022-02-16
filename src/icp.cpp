@@ -166,13 +166,11 @@ int main (int argc, char** argv)
         //         colorize(*tgt, *align_colored4, {0, 255, 0});
         //     case 10:
         //         colorize(*tgt, *align_colored5, {128, 0, 128});
-        //     // case 6:
-        //         // colorize(*tgt, *align_colored7, {128, 0, 128});
         //     case 17:
         //         colorize(*tgt, *align_colored7, {255, 255, 255});
 
-        //     // default:
-        //     //     colorize(*Final, *align_colored7, {255, 255, 255});
+        //     default:
+        //         colorize(*Final, *align_colored7, {255, 255, 255});
         // }
         // colorize(*Final, *align_colored, {255, 255, 255});//y
         *sum+=*align_colored1;

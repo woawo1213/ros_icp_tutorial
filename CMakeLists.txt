@@ -10,53 +10,56 @@ find_package(catkin REQUIRED COMPONENTS
   tf2 geometry_msgs
 )
 catkin_package()
-add_executable(example src/example.cpp)
+add_executable(example test/example.cpp)
 target_link_libraries(example ${catkin_LIBRARIES})
 
-add_executable(example_voxelgrid src/example_voxelgrid.cpp)
+add_executable(example_voxelgrid test/example_voxelgrid.cpp)
 target_link_libraries(example_voxelgrid ${catkin_LIBRARIES})
 
-add_executable(pcl_shptr_1 src/pcl_shptr_1.cpp)
+add_executable(pcl_shptr_1 test/pcl_shptr_1.cpp)
 target_link_libraries(pcl_shptr_1 ${catkin_LIBRARIES})
 
-add_executable(pcl_shptr_2 src/pcl_shptr_2.cpp)
+add_executable(pcl_shptr_2 test/pcl_shptr_2.cpp)
 target_link_libraries(pcl_shptr_2 ${catkin_LIBRARIES})
 
-add_executable(pcl_shptr_3 src/pcl_shptr_3.cpp)
+add_executable(pcl_shptr_3 test/pcl_shptr_3.cpp)
 target_link_libraries(pcl_shptr_3 ${catkin_LIBRARIES})
 
-add_executable(transform src/transform.cpp)
+add_executable(transform test/transform.cpp)
 target_link_libraries(transform ${catkin_LIBRARIES})
 
-add_executable(pcd_read src/pcd_read.cpp)
+add_executable(pcd_read test/pcd_read.cpp)
 target_link_libraries(pcd_read ${catkin_LIBRARIES})
 
-add_executable(pcd_write src/pcd_write.cpp)
+add_executable(pcd_write test/pcd_write.cpp)
 target_link_libraries(pcd_write ${catkin_LIBRARIES})
 
-add_executable(downsampling src/downsampling.cpp)
+add_executable(downsampling test/downsampling.cpp)
 target_link_libraries(downsampling ${catkin_LIBRARIES})
 
-add_executable(uniformsampling src/uniformsampling.cpp)
+add_executable(uniformsampling test/uniformsampling.cpp)
 target_link_libraries(uniformsampling ${catkin_LIBRARIES})
 
-add_executable(upsampling src/upsampling.cpp)
+add_executable(upsampling test/upsampling.cpp)
 target_link_libraries(upsampling ${catkin_LIBRARIES})
 
-add_executable(passthrough src/passthrough.cpp)
+add_executable(passthrough test/passthrough.cpp)
 target_link_libraries(passthrough ${catkin_LIBRARIES})
 
-add_executable(noise src/noise.cpp)
+add_executable(noise test/noise.cpp)
 target_link_libraries(noise ${catkin_LIBRARIES})
 
-add_executable(ransac src/ransac.cpp)
+add_executable(ransac test/ransac.cpp)
 target_link_libraries(ransac ${catkin_LIBRARIES})
 
-add_executable(kdtree src/kdtree.cpp)
+add_executable(kdtree test/kdtree.cpp)
 target_link_libraries(kdtree ${catkin_LIBRARIES})
 
+add_executable(normal test/normal.cpp)
+target_link_libraries(normal ${catkin_LIBRARIES} pcl_visualization)
+
 add_executable(icp src/icp.cpp)
-target_link_libraries(icp ${catkin_LIBRARIES})
+target_link_libraries(icp ${catkin_LIBRARIES} pcl_visualization)
 
 add_executable(test_icp src/test_icp.cpp)
 target_link_libraries(test_icp ${catkin_LIBRARIES})

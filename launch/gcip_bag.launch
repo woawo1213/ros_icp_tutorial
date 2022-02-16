@@ -1,0 +1,9 @@
+<launch>
+
+  <arg name="bag_path" default="/home/jm/workspace/icp_ws/src/icp_tutorial/bag/desk2.bag" />
+
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find icp_tutorial)/rviz/icp.rviz"/>
+  <node pkg="rosbag" type="play" name="rosbag_play" output="screen"  respawn="true"  args="$(arg bag_path)"/>
+  <node pkg="icp_tutorial" type="test_gicp" name="icp" output="screen" />
+
+</launch>

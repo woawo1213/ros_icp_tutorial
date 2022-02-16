@@ -109,7 +109,7 @@ public:
         sor.setLeafSize (0.1f, 0.1f, 0.1f);
         sor.filter (cloud_filtered);
 
-        // //convert pcl::PCLPointCloud2 -> pcl::PointCloud<pcl::PointXYZ>
+        //convert pcl::PCLPointCloud2 -> pcl::PointCloud<pcl::PointXYZ>
         pcl::fromPCLPointCloud2(cloud_filtered, *src_pc);
 
         if(count==0)
@@ -130,11 +130,11 @@ public:
         // remove floor
         // pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients ());
         // pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
-        // // Create the segmentation object
+        // Create the segmentation object
         // pcl::SACSegmentation<pcl::PointXYZ> seg;
-        // // Optional
+        // Optional
         // seg.setOptimizeCoefficients (true);
-        // // Mandatory
+        // Mandatory
         // seg.setInputCloud (src_pc);
         // seg.setModelType (pcl::SACMODEL_PLANE);
         // seg.setMethodType (pcl::SAC_RANSAC);

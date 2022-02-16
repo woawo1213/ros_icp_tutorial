@@ -97,7 +97,7 @@ public:
         sor.setLeafSize (0.1f, 0.1f, 0.1f);
         sor.filter (cloud_filtered);
 
-        // //convert pcl::PCLPointCloud2 -> pcl::PointCloud<pcl::PointXYZ>
+        //convert pcl::PCLPointCloud2 -> pcl::PointCloud<pcl::PointXYZ>
         pcl::fromPCLPointCloud2(cloud_filtered, *src_pc);
         
         // icp
