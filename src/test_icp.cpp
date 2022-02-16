@@ -97,9 +97,41 @@ public:
         sor.setLeafSize (0.1f, 0.1f, 0.1f);
         sor.filter (cloud_filtered);
 
-        //convert pcl::PCLPointCloud2 -> pcl::PointCloud<pcl::PointXYZ>
+        // //convert pcl::PCLPointCloud2 -> pcl::PointCloud<pcl::PointXYZ>
         pcl::fromPCLPointCloud2(cloud_filtered, *src_pc);
         
+
+        // pcl::SampleConsensusModelPlane<pcl::PointXYZ>::Ptr model_p (new pcl::SampleConsensusModelPlane<pcl::PointXYZ> (src_pc));
+        // pcl::RandomSampleConsensus<pcl::PointXYZ> ransac (model_p);
+        // ransac.setDistanceThreshold (.01);
+        // ransac.computeModel();
+        // ransac.getInliers(inliers);
+        
+
+        // pcl::copyPointCloud<pcl::PointXYZ>(*src_pc, inliers, *final);
+
+        // remove floor
+        // pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients ());
+        // pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
+        // // Create the segmentation object
+        // pcl::SACSegmentation<pcl::PointXYZ> seg;
+        // // Optional
+        // seg.setOptimizeCoefficients (true);
+        // // Mandatory
+        // seg.setInputCloud (src_pc);
+        // seg.setModelType (pcl::SACMODEL_PLANE);
+        // seg.setMethodType (pcl::SAC_RANSAC);
+        // seg.setMaxIterations (1000);
+        // seg.setDistanceThreshold (0.1);
+        // seg.segment (*inliers, *coefficients);
+
+        // pcl::ExtractIndices<pcl::PointXYZ> extract;
+        // extract.setInputCloud (src_pc);
+        // extract.setIndices (inliers);
+        // extract.setNegative (true);//false
+        // extract.filter (*fixed_pc);
+
+
         // icp
         // skip initial source point cloud input
         if((count > 0)&&(count < 1000))

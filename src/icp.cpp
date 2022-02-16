@@ -1,12 +1,9 @@
 #include <iostream>
+#include <Eigen/Core>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pcl/registration/icp.h>
 #include <pcl/registration/gicp.h>
-#include<pcl/features/fpfh.h>//local
-#include<pcl/features/cvfh.h>//global
-
-#include <Eigen/Core>
 #include <pcl/point_cloud.h>
 #include <pcl/common/time.h>
 #include <pcl/console/print.h>
@@ -19,7 +16,6 @@
 #include <pcl/sample_consensus/sac_model_plane.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/visualization/pcl_visualizer.h>
-
 #include <pcl/visualization/cloud_viewer.h> 
 
 
@@ -41,24 +37,15 @@ void colorize(const pcl::PointCloud<pcl::PointXYZ> &pc, pcl::PointCloud<pcl::Poi
     }
 }
 
-
 int main (int argc, char** argv)
 {
-
-
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr sum(new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr align_colored(new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr align_colored1(new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr align_colored2(new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr align_colored3(new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr align_colored4(new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr align_colored5(new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr align_colored6(new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr align_colored7(new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr src_colored(new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr tgt_colored(new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr align_colored(new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr sum(new pcl::PointCloud<pcl::PointXYZRGB>);
 
     Eigen::Matrix4f tf_mul;
+
     tf_mul<< 1, 0, 0, 0,
             0, 1, 0, 0,
             0, 0, 1, 0,
@@ -66,7 +53,7 @@ int main (int argc, char** argv)
     
     int count = 0;
 
-    for(int i = 0; i < 15; i++)
+    for(int i = 0; i < 13; i++)
     {
         std::string file_name = "desk.pcd";
         std::string file_name_a;
@@ -76,120 +63,59 @@ int main (int argc, char** argv)
         file_name_a="00"+counting_a+"_"+file_name;
         file_name_b="00"+counting_b+"_"+file_name;
 
-        pcl::PointCloud<pcl::PointXYZ>::Ptr init (new pcl::PointCloud<pcl::PointXYZ>);
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_static (new pcl::PointCloud<pcl::PointXYZ>);
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_in (new pcl::PointCloud<pcl::PointXYZ>);
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_out (new pcl::PointCloud<pcl::PointXYZ>);
-        
 
-        pcl::io::loadPCDFile<pcl::PointXYZ> ("/home/jm/workspace/icp_ws/src/icp_tutorial/pcd/desk/0000_desk.pcd", *cloud_static);
+        pcl::io::loadPCDFile<pcl::PointXYZ> ("/home/jm/workspace/icp_ws/src/icp_tutorial/pcd/desk/0000_desk.pcd", *cloud_static); //standard
         pcl::io::loadPCDFile<pcl::PointXYZ> ("/home/jm/workspace/icp_ws/src/icp_tutorial/pcd/desk/"+file_name_b, *cloud_in); //source
         pcl::io::loadPCDFile<pcl::PointXYZ> ("/home/jm/workspace/icp_ws/src/icp_tutorial/pcd/desk/"+file_name_a, *cloud_out); //target
 
-        pcl::ModelCoefficients::Ptr coefficients (new pcl::ModelCoefficients ());
-        pcl::PointIndices::Ptr inliers (new pcl::PointIndices ());
-        // Create the segmentation object
-        pcl::SACSegmentation<pcl::PointXYZ> seg;
-        // Optional
-        seg.setOptimizeCoefficients (true);
-        // Mandatory
-        seg.setInputCloud (cloud_in);
-        seg.setModelType (pcl::SACMODEL_PLANE);
-        seg.setMethodType (pcl::SAC_RANSAC);
-        seg.setMaxIterations (1000);
-        seg.setDistanceThreshold (0.1);
-        seg.segment (*inliers, *coefficients);
+        pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> t_gicp;
+        t_gicp.setInputSource(cloud_in);
+        t_gicp.setInputTarget(cloud_out);
+        t_gicp.setMaximumIterations(2000);
+        t_gicp.setTransformationEpsilon(1e-10);
+        t_gicp.setMaxCorrespondenceDistance(10);
+        t_gicp.setEuclideanFitnessEpsilon(1);
+        t_gicp.setRANSACOutlierRejectionThreshold (1.5); 
+        t_gicp.setRANSACIterations(10);
 
-        pcl::ExtractIndices<pcl::PointXYZ> extract;
-        extract.setInputCloud (cloud_in);
-        extract.setIndices (inliers);
-        extract.setNegative (true);//false
-        extract.filter (*init);
+        pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> acc_gicp;
+        acc_gicp.setInputSource(cloud_in);
+        acc_gicp.setInputTarget(cloud_static);
+        acc_gicp.setMaximumIterations(1000);
+        acc_gicp.setTransformationEpsilon(1e-9);
+        acc_gicp.setMaxCorrespondenceDistance(100);
+        acc_gicp.setEuclideanFitnessEpsilon (1);
+        acc_gicp.setRANSACOutlierRejectionThreshold (1e-5);
+        acc_gicp.setRANSACIterations(10);
 
-
-
-        pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> gicp;
-        gicp.setInputSource(cloud_in);
-        gicp.setInputTarget(cloud_out);
-        gicp.setMaximumIterations(2000);
-        gicp.setTransformationEpsilon(1e-10);
-        gicp.setMaxCorrespondenceDistance(10);
-        gicp.setEuclideanFitnessEpsilon(1);
-        gicp.setRANSACOutlierRejectionThreshold (1.5); 
-        gicp.setRANSACIterations(10);
-
-        pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZ, pcl::PointXYZ> accgicp;
-        accgicp.setInputSource(init);
-        accgicp.setInputTarget(cloud_static);
-        accgicp.setMaximumIterations(1000);
-        accgicp.setTransformationEpsilon(1e-9);
-        accgicp.setMaxCorrespondenceDistance(100);
-        accgicp.setEuclideanFitnessEpsilon (1);
-        accgicp.setRANSACOutlierRejectionThreshold (1e-5);
-        accgicp.setRANSACIterations(10);
-
-        pcl::PointCloud<pcl::PointXYZ> ::Ptr Final (new pcl::PointCloud<pcl::PointXYZ>);
+        pcl::PointCloud<pcl::PointXYZ> ::Ptr Align (new pcl::PointCloud<pcl::PointXYZ>);
         pcl::PointCloud<pcl::PointXYZ> ::Ptr Acc (new pcl::PointCloud<pcl::PointXYZ>);
         pcl::PointCloud<pcl::PointXYZ> ::Ptr tgt (new pcl::PointCloud<pcl::PointXYZ>);
 
-        gicp.align(*Final);
-        accgicp.align(*Acc);
-        
+        t_gicp.align(*Align);
+        acc_gicp.align(*Acc);
 
-        std::cout << "has converged:" << gicp.hasConverged() << " score: " << gicp.getFitnessScore() << std::endl;
-        std::cout << gicp.getFinalTransformation() << std::endl;
-        Eigen::Matrix4f src2dst = gicp.getFinalTransformation();
-        // std::cout << accgicp.getFinalTransformation() << std::endl;
-        // Eigen::Matrix4f src2dst = accgicp.getFinalTransformation();
-        // tf_mul = tf_mul * src2dst;
+        std::cout << "has converged:" << t_gicp.hasConverged() << " score: " << t_gicp.getFitnessScore() << std::endl;
+        std::cout << t_gicp.getFinalTransformation() << std::endl;
+        Eigen::Matrix4f src2dst = t_gicp.getFinalTransformation();
+        tf_mul = tf_mul * src2dst;
 
-        // pcl::transformPointCloud(*Final, *tgt, tf_mul);
-        // pcl::transformPointCloud(*Acc, *tgt, tf_mul);
-        colorize(*Acc, *align_colored1, {255, 255, 255});
-
-
-        // pcl::PointCloud<pcl::PointXYZRGB>::Ptr src_colored(new pcl::PointCloud<pcl::PointXYZRGB>);
-        // pcl::PointCloud<pcl::PointXYZRGB>::Ptr tgt_colored(new pcl::PointCloud<pcl::PointXYZRGB>);
-
-        // colorize(*cloud_in, *src_colored, {255, 0, 0});//r
-        // colorize(*cloud_out, *tgt_colored, {0, 255, 0});//g
-        
-        // switch(i)
-        // {
-        //     case 0:
-        //         colorize(*tgt, *align_colored1, {255, 0, 0});
-        //     case 1:
-        //         colorize(*tgt, *align_colored2, {255, 140, 0});
-        //     case 5:
-        //         colorize(*tgt, *align_colored3, {255, 255, 0});
-        //     case 9:
-        //         colorize(*tgt, *align_colored4, {0, 255, 0});
-        //     case 10:
-        //         colorize(*tgt, *align_colored5, {128, 0, 128});
-        //     case 17:
-        //         colorize(*tgt, *align_colored7, {255, 255, 255});
-
-        //     default:
-        //         colorize(*Final, *align_colored7, {255, 255, 255});
-        // }
-        // colorize(*Final, *align_colored, {255, 255, 255});//y
-        *sum+=*align_colored1;
-        // *sum += *tgt;
+        // colorize(*cloud_in, *src_colored, {255, 0, 0});
+        // colorize(*cloud_out, *tgt_colored, {0, 255, 0});
+        // colorize(*Align, *align_colored, {0, 0, 255});
+        colorize(*Acc, *align_colored, {255, 255, 255});//white
+        *sum+=*align_colored;
         count++;
     }
 
     pcl::visualization::CloudViewer viewer("cloud viewer");
     // viewer.showCloud(src_colored,"src");
     // viewer.showCloud(tgt_colored,"dst");
-    // viewer.showCloud(align_colored, "final");
+    // viewer.showCloud(align_colored, "Align");
     viewer.showCloud(sum, "sum");
-    // viewer.showCloud(align_colored1, "align1");
-    // viewer.showCloud(align_colored2, "align2");
-    // viewer.showCloud(align_colored3, "align3");
-    // viewer.showCloud(align_colored4, "align4");
-    // viewer.showCloud(align_colored5, "align5");
-    // viewer.showCloud(align_colored6, "align6");
-    // viewer.showCloud(align_colored7, "align7");
 
     while (!viewer.wasStopped ())
     {
