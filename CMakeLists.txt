@@ -67,6 +67,9 @@ target_link_libraries(test_icp ${catkin_LIBRARIES})
 add_executable(test_gicp src/test_gicp.cpp)
 target_link_libraries(test_gicp ${catkin_LIBRARIES})
 
+add_executable(harris src/harris.cpp)
+target_link_libraries(harris ${catkin_LIBRARIES} pcl_visualization)
+
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
